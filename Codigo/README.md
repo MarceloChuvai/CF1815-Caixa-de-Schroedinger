@@ -22,5 +22,3 @@ Para eliminar viés estatístico, os bits são extraídos usando a técnica de V
 
 5. Saída via porta serial;
 O sistema imprime 10.000 bits aleatórios na porta serial, com intervalo de 10 milissegundos entre cada um, permitindo análise externa ou armazenamento.
-
-Este projeto demonstra como é possível gerar aleatoriedade de qualidade razoável utilizando apenas recursos básicos do Arduino Uno, combinando ruído físico com técnicas de correção estatística.
