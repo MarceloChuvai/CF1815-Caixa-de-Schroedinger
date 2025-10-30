@@ -10,9 +10,7 @@ Leituras da porta analógica A0, mantida desconectada, são utilizadas como font
 2.Inicialização de gerador pseudoaleatório (LCG);
 Os valores captados são utilizados para configurar um Gerador Congruente Linear (LCG), cuja fórmula é:
 
-\[
-   X_{n+1} = (a \cdot X_n + c) \mod m
-   \]
+X_{n+1} = (a * X_n + c) \mod m
 
 Os parâmetros `a`, `c` e `m` são derivados das leituras analógicas, garantindo variabilidade a cada execução.
 
