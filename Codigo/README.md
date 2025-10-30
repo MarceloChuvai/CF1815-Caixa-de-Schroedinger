@@ -7,7 +7,7 @@ Funcionamento:
 1. Captura de ruído analógico;
 Leituras da porta analógica A0, mantida desconectada, são utilizadas como fonte de entropia. O ruído elétrico do ambiente gera variações imprevisíveis de tensão, que são convertidas em valores digitais pelo conversor analógico-digital do Arduino.
 
-2.Inicialização de gerador pseudoaleatório (LCG);
+2. Inicialização de gerador pseudoaleatório (LCG);
 Os valores captados são utilizados para configurar um Gerador Congruente Linear (LCG), cuja fórmula é:
 
 X_{n+1} = (a * X_n + c) \mod m
