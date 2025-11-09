@@ -1,32 +1,38 @@
 #include <Arduino.h>
-#include "random_bit_generator.h"
-#include "led_controller.h"
-#include "button_handler.h"
+#include "led_control.h"
+#include "random_generator.h"
+#include "input.h"
 
+#define LED_PIN 6
 #define BUTTON_PIN 3
-#define ACTIVE_LED 0  // LED que representa o bit atual
-
-int lastBit = 0;
+#define NUM_PIXELS 8
 
 void setup() {
-  initLEDs();
-  initButton(BUTTON_PIN);
-  initRandomSeed();
+  initLED(LED_PIN, NUM_PIXELS);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+}
+
+bool isPressed() {
+  return digitalRead(BUTTON_PIN) == LOW;
 }
 
 void loop() {
-  bool pressed = isButtonPressed(BUTTON_PIN);
+  static bool buttonHeld = false;
+  updateRNG();
+  if (isButtonPressed(BUTTON_PIN)) {
+    if (!buttonHeld) {
+      buttonHeld = true;
+      int bit = getLastBit();
 
-  if (pressed) {
-    // Enquanto o botão estiver pressionado, mostra cor fixa
-    if (lastBit == 0)
-      showColor(ACTIVE_LED, 255, 0, 0);  // Vermelho
-    else
-      showColor(ACTIVE_LED, 0, 255, 0);  // Verde
+      if (bit == 1)
+        showColor(0, 255, 0);   // Verde
+      else
+        showColor(255, 0, 0);   // Vermelho
+    }
   } else {
-    // Geração de bit e piscar branco
-    lastBit = generateRandomBit();
-    blinkWhite(ACTIVE_LED, 200);
+    if (buttonHeld) {
+      buttonHeld = false;
+    }
+    showBlink(255, 255, 255, 150);
   }
 }
-
