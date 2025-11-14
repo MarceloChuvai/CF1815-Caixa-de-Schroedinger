@@ -19,20 +19,24 @@ bool isPressed() {
 void loop() {
   static bool buttonHeld = false;
   updateRNG();
-  if (isButtonPressed(BUTTON_PIN)) {
-    if (!buttonHeld) {
-      buttonHeld = true;
-      int bit = getLastBit();
 
-      if (bit == 1)
-        showColor(0, 255, 0);   // Verde
-      else
-        showColor(255, 0, 0);   // Vermelho
-    }
+  if (isButtonPressed(BUTTON_PIN)) {
+
+    // BOTÃO APERTADO
+    buttonHeld = true;
+    showBlink(255, 255, 255, 150);
+
   } else {
+
+    // BOTÃO SOLTO
     if (buttonHeld) {
       buttonHeld = false;
+
+      int bit = getLastBit();
+      if (bit == 1)
+        showColor(0, 255, 0);   // verde
+      else
+        showColor(255, 0, 0);   // vermelho
     }
-    showBlink(255, 255, 255, 150);
   }
 }
