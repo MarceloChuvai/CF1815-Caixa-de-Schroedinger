@@ -1,1 +1,0 @@
-Por efeitos de praticidade, optou-se por modelar à parte cada um dos elementos do projeto. A montagem, então, abrange a caixa, a tampa dessa caixa, o conector desses dois elementos e a tampa traseira, que fecha a entrada dos cabos do microcontrolador, além daquilo que foi chamado do forro, componente sobre o qual a cabeça do gato foi posicionada.
