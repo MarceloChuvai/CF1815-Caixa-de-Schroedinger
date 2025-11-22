@@ -1,81 +1,102 @@
+#include <Arduino.h>
 #include "random_generator.h"
 
-const int waitTime = 16;
+// -------- configuração do teste --------
+#define BUF_SIZE 128
+#define MAX_LAG 16
+#define PRINT_INTERVAL 200
+#define MAX_BITS 10000
 
-static byte leftStack = 0;
-static byte rightStack = 0;
-static byte lastByte = 0;
-static int lastBit = 0;
-static unsigned long lastGenTime = 0;
+// -------- variáveis de análise --------
+unsigned long zeros = 0;
+unsigned long ones  = 0;
+unsigned long total = 0;
+unsigned long totalBits = 0;
 
-byte rotate(byte b, int r) {
-  return (b << r) | (b >> (8 - r));
-}
+int8_t buf[BUF_SIZE];   // +1 / -1
+int bufPos = 0;
 
-void pushLeftStack(byte bitToPush) {
-  leftStack = (leftStack << 1) ^ bitToPush ^ leftStack;
-}
+// ---------- função de autocorrelação ----------
+void printAutocorrelation(int validSamples) {
+  Serial.print("R(k) lag 1-"); Serial.println(MAX_LAG);
+  
+  for (int k = 1; k <= MAX_LAG; k++) {
+    long acc = 0;
 
-void pushRightStackRight(byte bitToPush) {
-  rightStack = (rightStack >> 1) ^ (bitToPush << 7) ^ rightStack;
-}
-
-byte getTrueRotateRandomByte() {
-  byte finalByte = 0;
-  byte lastStack = leftStack ^ rightStack;
-
-  for (int i = 0; i < 4; i++) {
-    delayMicroseconds(waitTime);
-    int leftBits = analogRead(A0);
-
-    delayMicroseconds(waitTime);
-    int rightBits = analogRead(A1);
-
-    finalByte ^= rotate(leftBits, i);
-    finalByte ^= rotate(rightBits, 7 - i);
-
-    for (int j = 0; j < 8; j++) {
-      byte leftBit = (leftBits >> j) & 1;
-      byte rightBit = (rightBits >> j) & 1;
-
-      if (leftBit != rightBit) {
-        if (lastStack % 2 == 0)
-          pushLeftStack(leftBit);
-        else
-          pushRightStackRight(leftBit);
-      }
+    for (int i = 0; i < validSamples; i++) {
+      int j = (i + k) % validSamples;
+      acc += (long)buf[i] * (long)buf[j];
     }
+
+    float R = (float)acc / (float)validSamples;
+    Serial.print(R, 2);
+    Serial.print(" ");
   }
 
-  lastByte ^= (lastByte >> 3) ^ (lastByte << 5) ^ (lastByte >> 4);
-  lastByte ^= finalByte;
-
-  return lastByte ^ leftStack ^ rightStack;
+  Serial.println();
+  Serial.println("------------------------");
 }
 
-// Correção de Von Neumann
-int getVonNeumannBit() {
-  while (true) {
-    byte b1 = getTrueRotateRandomByte();
-    byte b2 = getTrueRotateRandomByte();
+// ---------------- Setup ----------------
+void setup() {
+  Serial.begin(9600);
+  delay(2000);
 
-    if (b1 != b2) {
-      return (b1 > b2) ? 1 : 0;
-    }
+  initRNG();   // <- vem do seu primeiro código
+
+  Serial.println("==================================");
+  Serial.println(" TRNG + Von Neumann - TESTE ");
+  Serial.println(" Viés e Autocorrelação ");
+  Serial.println("==================================");
+  Serial.println("Total   | 0s     | 1s     | % de 1");
+
+  // inicializa buffer
+  for (int i = 0; i < BUF_SIZE; i++) {
+    buf[i] = 0;
   }
 }
 
-void updateRNG() {
-  if (millis() - lastGenTime > 5) {
-    lastGenTime = millis();
-    lastBit = getVonNeumannBit();
+// ---------------- Loop ----------------
+void loop() {
+
+  if (totalBits >= MAX_BITS) {
+    Serial.println(">> TESTE FINALIZADO <<");
+    while (true);  // trava
   }
-}
 
-int getLastBit() {
-  return lastBit;
-}
+  updateRNG();              // atualiza internamente
+  int bit = getLastBit();    // pega o bit
 
-void initRNG() {
-  analogReference(DEFAULT);
+  int8_t x = (bit == 1) ? 1 : -1;
+
+  // atualiza buffer circular
+  buf[bufPos] = x;
+  bufPos = (bufPos + 1) % BUF_SIZE;
+
+  // contagem de viés
+  if (bit == 0) zeros++;
+  else ones++;
+
+  total++;
+  totalBits++;
+
+  // imprime a cada 100 bits
+  if (total % 100 == 0) {
+    float percentOnes = (ones * 100.0) / total;
+
+    Serial.print(total);
+    Serial.print(" | ");
+    Serial.print(zeros);
+    Serial.print(" | ");
+    Serial.print(ones);
+    Serial.print(" | ");
+    Serial.print(percentOnes, 2);
+    Serial.println(" %");
+  }
+
+  // imprime autocorrelação
+  if (totalBits % PRINT_INTERVAL == 0) {
+    int validSamples = (totalBits < BUF_SIZE) ? totalBits : BUF_SIZE;
+    printAutocorrelation(validSamples);
+  }
 }
